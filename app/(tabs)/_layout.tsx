@@ -31,6 +31,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="camera"
+        options={{
+          title: 'Camera',
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="camera" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
           title: 'History',

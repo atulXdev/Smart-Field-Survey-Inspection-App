@@ -10,7 +10,7 @@ export default function DashboardScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Custom App Header / Welcome Screen */}
