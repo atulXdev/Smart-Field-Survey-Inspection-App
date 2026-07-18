@@ -1,48 +1,69 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
-
+import { Platform } from 'react-native';
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? 'dark' : 'light';
+  const activeColors = Colors[theme];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: activeColors.tint,
+        tabBarInactiveTintColor: activeColors.icon,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: {
+          backgroundColor: activeColors.card,
+          borderTopColor: activeColors.border,
+          height: Platform.OS === 'ios' ? 88 : 60,
+          paddingBottom: Platform.OS === 'ios' ? 32 : 10,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        }
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={22} name={focused ? "home" : "home-outline"} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="new-survey"
         options={{
           title: 'New Survey',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="add-circle" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={22} name={focused ? "add-circle" : "add-circle-outline"} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: 'History',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="time" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={22} name={focused ? "time" : "time-outline"} color={color} />
+          ),
         }}
       />
-
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="person" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={22} name={focused ? "person" : "person-outline"} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -50,6 +71,13 @@ export default function TabLayout() {
         options={{
           href: null,
           title: 'Preview',
+        }}
+      />
+      <Tabs.Screen
+        name="survey-details"
+        options={{
+          href: null,
+          title: 'Details',
         }}
       />
     </Tabs>

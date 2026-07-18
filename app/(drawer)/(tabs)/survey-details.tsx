@@ -8,38 +8,38 @@ import { SurveyContext } from '../../context/SurveyContext';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function SurveyPreviewScreen() {
+export default function SurveyDetailsScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
-  const { addSurvey } = useContext(SurveyContext);
+  const { deleteSurvey } = useContext(SurveyContext);
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? 'dark' : 'light';
   const activeColors = Colors[theme];
-
-  const handleSubmit = () => {
-    const surveyData = {
-      id: params.id as string,
-      siteName: params.siteName as string,
-      clientName: params.clientName as string,
-      description: params.description as string,
-      priority: params.priority as string,
-      date: params.date as string,
-      contact: params.contact as string,
-      location: params.location as string,
-      photo: params.photo as string,
-    };
-
-    addSurvey(surveyData);
-    
-    Alert.alert('Success', 'Survey has been submitted successfully!', [
-      { text: 'OK', onPress: () => router.push('/') }
-    ]);
-  };
 
   const handleCopySummary = async () => {
     const summary = `Site:\n${params.siteName}\n\nClient:\n${params.clientName}\n\nPriority:\n${params.priority}\n\nLocation:\n${params.location || 'N/A'}\n\nContact:\n${params.contact || 'N/A'}\n\nDate:\n${params.date}`;
     await Clipboard.setStringAsync(summary);
     Alert.alert('Copied!', 'Survey summary has been copied to your clipboard.');
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Survey',
+      `Are you sure you want to delete the survey for "${params.siteName}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: () => {
+            if (params.id) {
+              deleteSurvey(params.id as string);
+              router.back();
+            }
+          } 
+        }
+      ]
+    );
   };
 
   const DetailItem = ({ icon, label, value }: { icon: any, label: string, value: string | undefined }) => (
@@ -60,7 +60,7 @@ export default function SurveyPreviewScreen() {
         <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={12}>
           <Ionicons name="arrow-back-outline" size={22} color={activeColors.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: activeColors.text }]}>Review & Confirm</Text>
+        <Text style={[styles.headerTitle, { color: activeColors.text }]}>Inspection Details</Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -74,7 +74,7 @@ export default function SurveyPreviewScreen() {
           <DetailItem icon="person-outline" label="Client" value={params.clientName as string} />
         </View>
 
-        {/* Inspection details Card */}
+        {/* Inspection Details Card */}
         <View style={[styles.card, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
           <Text style={[styles.cardTitle, { color: activeColors.text }]}>Inspection Details</Text>
           <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
@@ -88,7 +88,7 @@ export default function SurveyPreviewScreen() {
           <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
           <DetailItem icon="call-outline" label="Contact" value={params.contact as string} />
           <DetailItem icon="location-outline" label="Coordinates" value={params.location as string} />
-          <DetailItem icon="image-outline" label="Photo Attached" value={params.photo ? 'Yes (Local URI)' : 'No'} />
+          <DetailItem icon="image-outline" label="Photo Status" value={params.photo ? 'Attached' : 'No photo'} />
         </View>
 
         {/* Notes Card */}
@@ -100,43 +100,30 @@ export default function SurveyPreviewScreen() {
           </Text>
         </View>
 
-        {/* Copy Summary (Secondary Option) */}
+        {/* Actions */}
         <Pressable 
           style={({ pressed }) => [
-            styles.copyBtn, 
-            { borderColor: activeColors.border, backgroundColor: activeColors.card },
+            styles.primaryBtn, 
+            { backgroundColor: activeColors.tint },
             pressed && styles.pressedState
           ]} 
           onPress={handleCopySummary}
         >
-          <Ionicons name="copy-outline" size={16} color={activeColors.text} style={{ marginRight: 6 }} />
-          <Text style={[styles.copyBtnText, { color: activeColors.text }]}>Copy Summary to Clipboard</Text>
+          <Ionicons name="copy-outline" size={18} color="#FFF" style={{ marginRight: 8 }} />
+          <Text style={styles.primaryBtnText}>Copy Survey Summary</Text>
         </Pressable>
 
-        {/* Bottom Actions */}
-        <View style={styles.actionRow}>
-          <Pressable 
-            style={({ pressed }) => [
-              styles.editBtn, 
-              { borderColor: activeColors.border, backgroundColor: activeColors.card },
-              pressed && styles.pressedState
-            ]} 
-            onPress={() => router.back()}
-          >
-            <Text style={[styles.editBtnText, { color: activeColors.text }]}>Edit</Text>
-          </Pressable>
-          
-          <Pressable 
-            style={({ pressed }) => [
-              styles.submitBtn, 
-              { backgroundColor: activeColors.tint },
-              pressed && styles.pressedState
-            ]} 
-            onPress={handleSubmit}
-          >
-            <Text style={styles.submitBtnText}>Submit Report</Text>
-          </Pressable>
-        </View>
+        <Pressable 
+          style={({ pressed }) => [
+            styles.destructiveBtn, 
+            { backgroundColor: activeColors.danger + '12', borderColor: activeColors.danger },
+            pressed && styles.pressedState
+          ]} 
+          onPress={handleDelete}
+        >
+          <Ionicons name="trash-outline" size={18} color={activeColors.danger} style={{ marginRight: 8 }} />
+          <Text style={[styles.destructiveBtnText, { color: activeColors.danger }]}>Delete Survey</Text>
+        </Pressable>
 
       </ScrollView>
     </SafeAreaView>
@@ -206,44 +193,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  copyBtn: {
+  primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 20,
-  },
-  copyBtnText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  editBtn: {
-    flex: 1,
     height: 52,
     borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 12,
   },
-  editBtnText: {
+  primaryBtnText: {
+    color: '#FFF',
     fontSize: 15,
     fontWeight: '600',
   },
-  submitBtn: {
-    flex: 2,
-    height: 52,
-    borderRadius: 14,
+  destructiveBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginBottom: 16,
   },
-  submitBtnText: {
-    color: '#FFF',
+  destructiveBtnText: {
     fontSize: 15,
     fontWeight: '600',
   },

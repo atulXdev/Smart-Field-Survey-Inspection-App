@@ -15,11 +15,13 @@ export type Survey = {
 type SurveyContextType = {
   surveys: Survey[];
   addSurvey: (survey: Survey) => void;
+  deleteSurvey: (id: string) => void;
 };
 
 export const SurveyContext = createContext<SurveyContextType>({
   surveys: [],
   addSurvey: () => {},
+  deleteSurvey: () => {},
 });
 
 export const SurveyProvider = ({ children }: { children: ReactNode }) => {
@@ -46,8 +48,12 @@ export const SurveyProvider = ({ children }: { children: ReactNode }) => {
     setSurveys((prev) => [survey, ...prev]);
   };
 
+  const deleteSurvey = (id: string) => {
+    setSurveys((prev) => prev.filter((s) => s.id !== id));
+  };
+
   return (
-    <SurveyContext.Provider value={{ surveys, addSurvey }}>
+    <SurveyContext.Provider value={{ surveys, addSurvey, deleteSurvey }}>
       {children}
     </SurveyContext.Provider>
   );

@@ -23,48 +23,45 @@ export default function CameraScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [captureTime, setCaptureTime] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const [flash, setFlash] = useState<'off' | 'on'>('off');
   
   const cameraRef = useRef<CameraView>(null);
 
-  // If permission is still loading
   if (!permission) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color="#2563EB" />
       </View>
     );
   }
 
-  // If permission is denied
   if (!permission.granted) {
     return (
       <View style={styles.centerContainer}>
-        <Ionicons name="camera-outline" size={64} color="#9CA3AF" />
-        <Text style={styles.permissionText}>We need your permission to use the camera.</Text>
-        <Pressable style={styles.primaryButton} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
+        <Ionicons name="camera-outline" size={48} color="#64748B" />
+        <Text style={styles.permissionText}>Camera access is required to capture site inspections.</Text>
+        <Pressable style={styles.grantButton} onPress={requestPermission}>
+          <Text style={styles.grantButtonText}>Grant Camera Permission</Text>
         </Pressable>
       </View>
     );
   }
 
-  // Take photo
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
+          quality: 0.85,
         });
         
         if (photo?.uri) {
           setPhotoUri(photo.uri);
-          
-          // Format capture time beautifully
           const now = new Date();
           setCaptureTime(now.toLocaleTimeString() + ' on ' + now.toLocaleDateString());
         }
       } catch (error) {
-        Alert.alert('Error', 'Failed to take picture.');
+        Alert.alert('Error', 'Failed to capture image.');
       }
     }
   };
@@ -72,24 +69,6 @@ export default function CameraScreen() {
   const handleRetake = () => {
     setPhotoUri(null);
     setCaptureTime(null);
-  };
-
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete Photo',
-      'Are you sure you want to delete this photo?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            setPhotoUri(null);
-            setCaptureTime(null);
-          }
-        }
-      ]
-    );
   };
 
   const handleSaveToGallery = async () => {
@@ -103,77 +82,122 @@ export default function CameraScreen() {
     if (currentPermission?.status === 'granted') {
       try {
         await MediaLibrary.saveToLibraryAsync(photoUri);
-        Alert.alert('Saved!', 'Photo has been successfully saved to your gallery.');
+        Alert.alert('Saved', 'Photo saved to device gallery.');
       } catch (error) {
-        Alert.alert('Error', 'Failed to save photo to gallery.');
+        Alert.alert('Error', 'Failed to save photo.');
       }
     } else {
-      Alert.alert('Permission Required', 'We need gallery permission to save photos.');
+      Alert.alert('Permission Required', 'Gallery access is needed to save images.');
     }
   };
 
-  // Preview Mode
+  const toggleFacing = () => {
+    setFacing(prev => (prev === 'back' ? 'front' : 'back'));
+  };
+
+  const toggleFlash = () => {
+    setFlash(prev => (prev === 'off' ? 'on' : 'off'));
+  };
+
+  // Photo Review UI
   if (photoUri) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.previewContainer}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        {/* Top bar for review */}
+        <View style={styles.topControlBar}>
+          <Text style={styles.reviewTitle}>Preview Capture</Text>
+          <View style={{ width: 32 }} />
+        </View>
+
+        <View style={styles.previewWrapper}>
           <Image source={{ uri: photoUri }} style={styles.previewImage} />
-          
-          <View style={styles.timeOverlay}>
-            <Text style={styles.timeText}>{captureTime}</Text>
-          </View>
+          {captureTime && (
+            <View style={styles.timestampBadge}>
+              <Ionicons name="time-outline" size={12} color="#FFF" style={{ marginRight: 4 }} />
+              <Text style={styles.timestampText}>{captureTime}</Text>
+            </View>
+          )}
+        </View>
 
-          <View style={styles.actionRow}>
-            <Pressable style={[styles.actionButton, styles.retakeButton]} onPress={handleRetake}>
-              <Ionicons name="refresh-outline" size={20} color="#FFF" />
-              <Text style={styles.buttonText}>Retake</Text>
+        {/* Bottom bar for review */}
+        <View style={styles.bottomControlBar}>
+          <Pressable style={styles.secondaryCircleBtn} onPress={handleRetake}>
+            <Ionicons name="refresh" size={20} color="#FFF" />
+            <Text style={styles.buttonSubText}>Retake</Text>
+          </Pressable>
+
+          {isSelectMode ? (
+            <Pressable 
+              style={[styles.primaryActionBtn, { backgroundColor: '#16A34A' }]} 
+              onPress={() => router.navigate({ pathname: '/new-survey', params: { photoUri } })}
+            >
+              <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" style={{ marginRight: 6 }} />
+              <Text style={styles.primaryActionBtnText}>Use Photo</Text>
             </Pressable>
-
-            {isSelectMode ? (
-              <Pressable style={[styles.actionButton, styles.saveButton]} onPress={() => router.navigate({ pathname: '/new-survey', params: { photoUri } })}>
-                <Ionicons name="checkmark-outline" size={20} color="#FFF" />
-                <Text style={styles.buttonText}>Use</Text>
-              </Pressable>
-            ) : (
-              <Pressable style={[styles.actionButton, styles.saveButton]} onPress={handleSaveToGallery}>
-                <Ionicons name="download-outline" size={20} color="#FFF" />
-                <Text style={styles.buttonText}>Save</Text>
-              </Pressable>
-            )}
-
-            <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete}>
-              <Ionicons name="trash-outline" size={20} color="#FFF" />
-              <Text style={styles.buttonText}>Delete</Text>
+          ) : (
+            <Pressable 
+              style={[styles.primaryActionBtn, { backgroundColor: '#2563EB' }]} 
+              onPress={handleSaveToGallery}
+            >
+              <Ionicons name="download-outline" size={20} color="#FFF" style={{ marginRight: 6 }} />
+              <Text style={styles.primaryActionBtnText}>Save to Gallery</Text>
             </Pressable>
-          </View>
+          )}
+
+          <Pressable style={styles.secondaryCircleBtn} onPress={() => setPhotoUri(null)}>
+            <Ionicons name="close" size={20} color="#FFF" />
+            <Text style={styles.buttonSubText}>Cancel</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Camera Mode
+  // Camera Capture UI
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* Top Bar controls */}
+      <View style={styles.topControlBar}>
+        <Pressable onPress={() => router.back()} style={styles.iconBtn} hitSlop={12}>
+          <Ionicons name="arrow-back" size={24} color="#FFF" />
+        </Pressable>
+        <Pressable onPress={toggleFlash} style={styles.iconBtn} hitSlop={12}>
+          <Ionicons 
+            name={flash === 'on' ? "flash" : "flash-off-outline"} 
+            size={22} 
+            color={flash === 'on' ? "#D97706" : "#FFF"} 
+          />
+        </Pressable>
+      </View>
+
       <View style={styles.cameraWrapper}>
         {!isReady && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#4F46E5" />
-            <Text style={styles.loadingText}>Opening Camera...</Text>
+            <ActivityIndicator size="large" color="#2563EB" />
+            <Text style={styles.loadingText}>Initializing camera...</Text>
           </View>
         )}
         <CameraView 
           style={styles.camera} 
-          facing="back" 
+          facing={facing} 
+          flash={flash}
           ref={cameraRef}
           onCameraReady={() => setIsReady(true)}
         />
-        <View style={[styles.cameraOverlay, StyleSheet.absoluteFill]}>
-          <View style={styles.captureContainer}>
-            <Pressable style={styles.captureButton} onPress={takePicture}>
-              <View style={styles.captureInnerCircle} />
-            </Pressable>
-          </View>
-        </View>
+      </View>
+
+      {/* Bottom Bar controls */}
+      <View style={styles.bottomControlBar}>
+        <Pressable style={styles.secondaryCircleBtn} onPress={toggleFacing}>
+          <Ionicons name="camera-reverse-outline" size={22} color="#FFF" />
+          <Text style={styles.buttonSubText}>Flip</Text>
+        </Pressable>
+
+        <Pressable style={styles.captureButton} onPress={takePicture}>
+          <View style={styles.captureInnerCircle} />
+        </Pressable>
+
+        <View style={{ width: 60, alignItems: 'center' }} />
       </View>
     </SafeAreaView>
   );
@@ -183,37 +207,52 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+    justifyContent: 'space-between',
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F8FAFC',
     padding: 24,
   },
   permissionText: {
-    fontSize: 16,
-    color: '#374151',
+    fontSize: 15,
+    color: '#64748B',
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 24,
+    lineHeight: 22,
   },
-  primaryButton: {
-    backgroundColor: '#4F46E5',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
+  grantButton: {
+    backgroundColor: '#2563EB',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 12,
   },
-  buttonText: {
+  grantButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  topControlBar: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    backgroundColor: '#000',
+  },
+  iconBtn: {
+    padding: 8,
+  },
+  reviewTitle: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: 8,
   },
   cameraWrapper: {
     flex: 1,
-    borderRadius: 24,
-    overflow: 'hidden',
     backgroundColor: '#000',
   },
   camera: {
@@ -227,24 +266,36 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   loadingText: {
-    color: '#FFF',
+    color: '#64748B',
     marginTop: 12,
-    fontSize: 16,
+    fontSize: 14,
   },
-  cameraOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: 40,
-    backgroundColor: 'transparent',
-  },
-  captureContainer: {
+  bottomControlBar: {
+    height: 100,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    backgroundColor: '#000',
+  },
+  secondaryCircleBtn: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#1E293B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonSubText: {
+    color: '#94A3B8',
+    fontSize: 10,
+    marginTop: 2,
   },
   captureButton: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -254,49 +305,43 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: '#FFF',
   },
-  previewContainer: {
+  previewWrapper: {
     flex: 1,
     backgroundColor: '#000',
+    justifyContent: 'center',
   },
   previewImage: {
-    flex: 1,
+    width: '100%',
+    height: '100%',
     resizeMode: 'contain',
   },
-  timeOverlay: {
+  timestampBadge: {
     position: 'absolute',
-    top: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  timeText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 24,
-    paddingBottom: 40,
-    backgroundColor: '#000',
-  },
-  actionButton: {
+    bottom: 16,
+    left: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
-  retakeButton: {
-    backgroundColor: '#4B5563',
+  timestampText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '500',
   },
-  saveButton: {
-    backgroundColor: '#10B981',
+  primaryActionBtn: {
+    height: 48,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  deleteButton: {
-    backgroundColor: '#EF4444',
-  }
+  primaryActionBtnText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

@@ -8,19 +8,26 @@ import {
   Pressable, 
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as LocationApi from 'expo-location';
 import { SurveyContext } from '../../context/SurveyContext';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function NewSurveyScreen() {
   const { addSurvey } = useContext(SurveyContext);
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const params = useGlobalSearchParams();
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? 'dark' : 'light';
+  const activeColors = Colors[theme];
+
   const [siteName, setSiteName] = useState('');
   const [clientName, setClientName] = useState('');
   const [description, setDescription] = useState('');
@@ -31,10 +38,24 @@ export default function NewSurveyScreen() {
   const [location, setLocation] = useState('');
   const [photoUri, setPhotoUri] = useState('');
 
+  // Validation state
+  const [siteNameError, setSiteNameError] = useState(false);
+  const [clientNameError, setClientNameError] = useState(false);
+
   React.useEffect(() => {
-    if (params.photoUri) setPhotoUri(params.photoUri as string);
-    if (params.selectedContact) setContact(params.selectedContact as string);
-    if (params.selectedClient) setClientName(params.selectedClient as string);
+    if (params.photoUri) {
+      setPhotoUri(params.photoUri as string);
+      router.setParams({ photoUri: '' });
+    }
+    if (params.selectedContact) {
+      setContact(params.selectedContact as string);
+      router.setParams({ selectedContact: '' });
+    }
+    if (params.selectedClient) {
+      setClientName(params.selectedClient as string);
+      setClientNameError(false);
+      router.setParams({ selectedClient: '' });
+    }
   }, [params.photoUri, params.selectedContact, params.selectedClient]);
 
   const handleGetLocation = async () => {
@@ -53,7 +74,6 @@ export default function NewSurveyScreen() {
   };
 
   const onChangeDate = (event: any, selectedDate?: Date) => {
-    // Close the picker on Android after selection
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
@@ -63,21 +83,26 @@ export default function NewSurveyScreen() {
   };
 
   const handleSubmit = () => {
-    // 1. Validate required fields
+    let hasError = false;
     if (!siteName.trim()) {
-      Alert.alert('Validation Error', 'Please enter a Site Name.');
-      return;
+      setSiteNameError(true);
+      hasError = true;
+    } else {
+      setSiteNameError(false);
     }
+    
     if (!clientName.trim()) {
-      Alert.alert('Validation Error', 'Please enter a Client Name.');
-      return;
+      setClientNameError(true);
+      hasError = true;
+    } else {
+      setClientNameError(false);
     }
-    if (!surveyDate) {
-      Alert.alert('Validation Error', 'Please select a Survey Date.');
+
+    if (hasError) {
+      Alert.alert('Validation Error', 'Please fill in all required fields.');
       return;
     }
 
-    // 2. Pass to preview screen
     const formattedDate = surveyDate.toLocaleDateString();
     const newSurvey = {
       id: Date.now().toString(),
@@ -98,7 +123,7 @@ export default function NewSurveyScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: activeColors.background }]} edges={['top']}>
       <KeyboardAvoidingView 
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -106,58 +131,71 @@ export default function NewSurveyScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
           <View style={styles.header}>
-            <Text style={styles.title}>Create Survey</Text>
-            <Text style={styles.subtitle}>Fill in the details for the new inspection.</Text>
+            <Text style={[styles.title, { color: activeColors.text }]}>New Survey</Text>
+            <Text style={styles.subtitle}>Begin a new inspection report.</Text>
           </View>
 
-          <View style={styles.formCard}>
-            
-            {/* Site Name Input */}
+          {/* Section 1: Basic Information */}
+          <View style={[styles.sectionCard, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
+            <Text style={[styles.sectionHeader, { color: activeColors.text }]}>Basic Information</Text>
+            <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
+
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Site Name <Text style={styles.requiredAsterisk}>*</Text></Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="location-outline" size={20} color="#6B7280" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: activeColors.text }]}>Site Name <Text style={{ color: activeColors.danger }}>*</Text></Text>
+              <View style={[styles.inputContainer, { borderColor: siteNameError ? activeColors.danger : activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+                <Ionicons name="business-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: activeColors.text }]}
                   placeholder="e.g., Downtown Plaza"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#64748B"
                   value={siteName}
-                  onChangeText={setSiteName}
+                  onChangeText={(text) => {
+                    setSiteName(text);
+                    if (text.trim()) setSiteNameError(false);
+                  }}
                 />
               </View>
+              {siteNameError && <Text style={[styles.errorText, { color: activeColors.danger }]}>Site name is required</Text>}
             </View>
 
-            {/* Client Name Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Client Name <Text style={styles.requiredAsterisk}>*</Text></Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="person-outline" size={20} color="#6B7280" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: activeColors.text }]}>Client Name <Text style={{ color: activeColors.danger }}>*</Text></Text>
+              <View style={[styles.inputContainer, { borderColor: clientNameError ? activeColors.danger : activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+                <Ionicons name="person-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: activeColors.text }]}
                   placeholder="e.g., Acme Corp"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#64748B"
                   value={clientName}
-                  onChangeText={setClientName}
+                  onChangeText={(text) => {
+                    setClientName(text);
+                    if (text.trim()) setClientNameError(false);
+                  }}
                 />
               </View>
+              {clientNameError && <Text style={[styles.errorText, { color: activeColors.danger }]}>Client name is required</Text>}
             </View>
+          </View>
 
-            {/* Date Input */}
+          {/* Section 2: Inspection Details */}
+          <View style={[styles.sectionCard, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
+            <Text style={[styles.sectionHeader, { color: activeColors.text }]}>Inspection Details</Text>
+            <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
+
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Date <Text style={styles.requiredAsterisk}>*</Text></Text>
+              <Text style={[styles.label, { color: activeColors.text }]}>Date <Text style={{ color: activeColors.danger }}>*</Text></Text>
               <Pressable 
-                style={styles.inputContainer}
+                style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Ionicons name="calendar-outline" size={20} color="#6B7280" style={styles.inputIcon} />
-                <Text style={[styles.input, { paddingTop: Platform.OS === 'ios' ? 15 : 12 }]}>
+                <Ionicons name="calendar-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
+                <Text style={[styles.inputText, { color: activeColors.text }]}>
                   {surveyDate.toLocaleDateString()}
                 </Text>
               </Pressable>
 
-              {/* Show inline on iOS, or as a popup when requested on Android */}
               {(showDatePicker || Platform.OS === 'ios') && (
-                <View style={{ marginTop: Platform.OS === 'ios' ? 10 : 0 }}>
+                <View style={{ marginTop: 8, alignItems: 'flex-start' }}>
                   <DateTimePicker
                     value={surveyDate}
                     mode="date"
@@ -168,95 +206,179 @@ export default function NewSurveyScreen() {
               )}
             </View>
 
-            {/* Priority Selection */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Priority</Text>
+              <Text style={[styles.label, { color: activeColors.text }]}>Priority</Text>
               <View style={styles.priorityContainer}>
-                {['Low', 'Medium', 'High'].map((level) => (
-                  <Pressable
-                    key={level}
-                    style={[
-                      styles.priorityButton,
-                      priority === level && styles.priorityButtonActive
-                    ]}
-                    onPress={() => setPriority(level)}
-                  >
-                    <Text 
+                {['Low', 'Medium', 'High'].map((level) => {
+                  const getLevelColor = () => {
+                    if (level === 'Low') return activeColors.success;
+                    if (level === 'Medium') return activeColors.warning;
+                    return activeColors.danger;
+                  };
+                  const isActive = priority === level;
+                  return (
+                    <Pressable
+                      key={level}
                       style={[
-                        styles.priorityText,
-                        priority === level && styles.priorityTextActive
+                        styles.priorityButton,
+                        { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' },
+                        isActive && { borderColor: getLevelColor(), backgroundColor: getLevelColor() + '10' }
                       ]}
+                      onPress={() => setPriority(level)}
                     >
-                      {level}
-                    </Text>
+                      <Text 
+                        style={[
+                          styles.priorityText,
+                          { color: activeColors.icon },
+                          isActive && { color: getLevelColor(), fontWeight: '600' }
+                        ]}
+                      >
+                        {level}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+
+          {/* Section 3: Attachments */}
+          <View style={[styles.sectionCard, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
+            <Text style={[styles.sectionHeader, { color: activeColors.text }]}>Smart Attachments</Text>
+            <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
+
+            {/* Smart Action Rows */}
+            {/* Photo Row */}
+            <View style={styles.actionRow}>
+              <View style={styles.actionRowLeft}>
+                {photoUri ? (
+                  <View style={styles.thumbnailContainer}>
+                    <Image source={{ uri: photoUri }} style={styles.thumbnail} />
+                  </View>
+                ) : (
+                  <View style={[styles.actionIconContainer, { backgroundColor: activeColors.tint + '10' }]}>
+                    <Ionicons name="camera-outline" size={18} color={activeColors.tint} />
+                  </View>
+                )}
+                <View style={styles.actionRowTextContainer}>
+                  <Text style={[styles.actionRowTitle, { color: activeColors.text }]}>Photo Attachment</Text>
+                  <Text style={styles.actionRowStatus}>
+                    {photoUri ? '✓ Photo Captured' : 'No photo attached'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.actionRowRight}>
+                {photoUri && (
+                  <Pressable 
+                    style={styles.actionRowSecondaryBtn} 
+                    onPress={() => setPhotoUri('')}
+                  >
+                    <Ionicons name="trash-outline" size={16} color={activeColors.danger} />
                   </Pressable>
-                ))}
+                )}
+                <Pressable 
+                  style={[styles.actionRowBtn, { borderColor: activeColors.border }]}
+                  onPress={() => router.push({ pathname: '/camera', params: { mode: 'select' } })}
+                >
+                  <Text style={[styles.actionRowBtnText, { color: activeColors.tint }]}>
+                    {photoUri ? 'Retake' : 'Capture'}
+                  </Text>
+                </Pressable>
               </View>
             </View>
 
-            {/* Smart Actions */}
-            <View style={styles.actionButtonsRow}>
-              <Pressable style={styles.actionBtn} onPress={() => router.push({ pathname: '/camera', params: { mode: 'select' } })}>
-                <Ionicons name="camera-outline" size={24} color="#4F46E5" />
-                <Text style={styles.actionBtnText}>Add Photo</Text>
-              </Pressable>
-              
-              <Pressable style={styles.actionBtn} onPress={handleGetLocation}>
-                <Ionicons name="location-outline" size={24} color="#4F46E5" />
-                <Text style={styles.actionBtnText}>Get GPS</Text>
-              </Pressable>
-              
-              <Pressable style={styles.actionBtn} onPress={() => router.push({ pathname: '/contacts', params: { mode: 'select' } })}>
-                <Ionicons name="person-outline" size={24} color="#4F46E5" />
-                <Text style={styles.actionBtnText}>Get Contact</Text>
-              </Pressable>
+            {/* GPS Row */}
+            <View style={styles.actionRow}>
+              <View style={styles.actionRowLeft}>
+                <View style={[styles.actionIconContainer, { backgroundColor: activeColors.tint + '10' }]}>
+                  <Ionicons name="location-outline" size={18} color={activeColors.tint} />
+                </View>
+                <View style={styles.actionRowTextContainer}>
+                  <Text style={[styles.actionRowTitle, { color: activeColors.text }]}>GPS Coordinates</Text>
+                  <Text style={styles.actionRowStatus} numberOfLines={1}>
+                    {location ? `✓ ${location}` : 'No coordinates set'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.actionRowRight}>
+                <Pressable 
+                  style={[styles.actionRowBtn, { borderColor: activeColors.border }]}
+                  onPress={handleGetLocation}
+                >
+                  <Text style={[styles.actionRowBtnText, { color: activeColors.tint }]}>
+                    {location ? 'Refetch' : 'Get GPS'}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
-            {photoUri ? (
-              <View style={styles.photoPreviewContainer}>
-                <Text style={styles.label}>Attached Photo</Text>
-                <Text style={styles.photoUriText} numberOfLines={1}>{photoUri}</Text>
+            {/* Contacts Row */}
+            <View style={styles.actionRow}>
+              <View style={styles.actionRowLeft}>
+                <View style={[styles.actionIconContainer, { backgroundColor: activeColors.tint + '10' }]}>
+                  <Ionicons name="person-outline" size={18} color={activeColors.tint} />
+                </View>
+                <View style={styles.actionRowTextContainer}>
+                  <Text style={[styles.actionRowTitle, { color: activeColors.text }]}>Client Contact</Text>
+                  <Text style={styles.actionRowStatus} numberOfLines={1}>
+                    {contact ? `✓ ${contact}` : 'No contact details loaded'}
+                  </Text>
+                </View>
               </View>
-            ) : null}
+              <View style={styles.actionRowRight}>
+                <Pressable 
+                  style={[styles.actionRowBtn, { borderColor: activeColors.border }]}
+                  onPress={() => router.push({ pathname: '/contacts', params: { mode: 'select' } })}
+                >
+                  <Text style={[styles.actionRowBtnText, { color: activeColors.tint }]}>
+                    {contact ? 'Change' : 'Select'}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
 
-            {/* Contact Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Contact Number (Optional)</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="call-outline" size={20} color="#6B7280" style={styles.inputIcon} />
+            {/* Manually Editable Optional Fields */}
+            <View style={[styles.inputGroup, { marginTop: 16 }]}>
+              <Text style={[styles.label, { color: activeColors.text }]}>Contact Number (Optional)</Text>
+              <View style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+                <Ionicons name="call-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
-                  placeholder="Paste or type contact number"
-                  placeholderTextColor="#9CA3AF"
+                  style={[styles.input, { color: activeColors.text }]}
+                  placeholder="Contact details"
+                  placeholderTextColor="#64748B"
                   value={contact}
                   onChangeText={setContact}
                 />
               </View>
             </View>
 
-            {/* Location Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Location Coordinates (Optional)</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="location-outline" size={20} color="#6B7280" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: activeColors.text }]}>Location Coordinates (Optional)</Text>
+              <View style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+                <Ionicons name="map-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
-                  placeholder="Paste or type coordinates"
-                  placeholderTextColor="#9CA3AF"
+                  style={[styles.input, { color: activeColors.text }]}
+                  placeholder="Coordinates"
+                  placeholderTextColor="#64748B"
                   value={location}
                   onChangeText={setLocation}
                 />
               </View>
             </View>
+          </View>
 
-            {/* Description Input */}
+          {/* Section 4: Notes */}
+          <View style={[styles.sectionCard, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
+            <Text style={[styles.sectionHeader, { color: activeColors.text }]}>Additional Notes</Text>
+            <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
+
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Description (Optional)</Text>
-              <View style={[styles.inputContainer, styles.textAreaContainer]}>
+              <Text style={[styles.label, { color: activeColors.text }]}>Description (Optional)</Text>
+              <View style={[styles.inputContainer, styles.textAreaContainer, { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
                 <TextInput
-                  style={styles.textArea}
+                  style={[styles.textArea, { color: activeColors.text }]}
                   placeholder="Add any extra details here..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#64748B"
                   value={description}
                   onChangeText={setDescription}
                   multiline={true}
@@ -265,20 +387,22 @@ export default function NewSurveyScreen() {
                 />
               </View>
             </View>
-
-            {/* Submit Button */}
-            <Pressable 
-              style={({ pressed }) => [
-                styles.submitButton,
-                pressed && styles.submitButtonPressed
-              ]}
-              onPress={handleSubmit}
-            >
-              <Ionicons name="eye-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-              <Text style={styles.submitButtonText}>Preview Survey</Text>
-            </Pressable>
-
           </View>
+
+          {/* Submit Button */}
+          <Pressable 
+            style={({ pressed }) => [
+              styles.submitButton,
+              { backgroundColor: activeColors.tint },
+              pressed && styles.submitButtonPressed
+            ]}
+            onPress={handleSubmit}
+          >
+            <Ionicons name="eye-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+            <Text style={styles.submitButtonText}>Preview Survey</Text>
+          </Pressable>
+
+          <View style={styles.bottomSpacer} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -288,151 +412,177 @@ export default function NewSurveyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
   header: {
-    marginBottom: 24,
-    marginTop: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#111827',
-    letterSpacing: -0.5,
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#6B7280',
-  },
-  formCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  inputGroup: {
     marginBottom: 20,
   },
-  label: {
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  subtitle: {
     fontSize: 14,
+    color: '#64748B',
+  },
+  sectionCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 8,
   },
-  requiredAsterisk: {
-    color: '#EF4444',
+  divider: {
+    height: 1,
+    marginBottom: 16,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 6,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
     borderRadius: 12,
-    backgroundColor: '#F9FAFB',
     paddingHorizontal: 12,
-    height: 50,
+    height: 48,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#111827',
     height: '100%',
   },
+  inputText: {
+    flex: 1,
+    fontSize: 15,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 4,
+  },
   textAreaContainer: {
-    height: 100,
-    paddingVertical: 12,
+    height: 96,
+    paddingVertical: 8,
     alignItems: 'flex-start',
   },
   textArea: {
     flex: 1,
     fontSize: 15,
-    color: '#111827',
     width: '100%',
   },
   priorityContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
+    gap: 8,
   },
   priorityButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    paddingVertical: 10,
+    borderRadius: 12,
+    height: 40,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  priorityButtonActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#4F46E5',
+    justifyContent: 'center',
   },
   priorityText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
+    fontWeight: '500',
   },
-  priorityTextActive: {
-    color: '#4F46E5',
-  },
-  actionButtonsRow: {
+  actionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 10,
-  },
-  actionBtn: {
-    flex: 1,
-    backgroundColor: '#EEF2FF',
-    borderRadius: 12,
-    paddingVertical: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4F46E5',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E2E8F0',
   },
-  actionBtnText: {
-    color: '#4F46E5',
+  actionRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 12,
+  },
+  actionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  actionRowTextContainer: {
+    flex: 1,
+  },
+  actionRowTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  actionRowStatus: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  actionRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionRowBtn: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionRowBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    marginTop: 4,
   },
-  photoPreviewContainer: {
-    marginBottom: 20,
+  actionRowSecondaryBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 12,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  photoUriText: {
-    fontSize: 14,
-    color: '#10B981',
-    fontWeight: '500',
-    marginTop: 4,
+  thumbnailContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 10,
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
   },
   submitButton: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 14,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    marginTop: 10,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    marginTop: 8,
   },
   submitButtonPressed: {
     opacity: 0.8,
@@ -440,7 +590,10 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  }
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  bottomSpacer: {
+    height: 40,
+  },
 });

@@ -16,6 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ContactsScreen() {
   const [contacts, setContacts] = useState<Contacts.Contact[]>([]);
@@ -31,6 +32,7 @@ export default function ContactsScreen() {
 
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? 'dark' : 'light';
+  const activeColors = Colors[theme];
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -92,49 +94,54 @@ export default function ContactsScreen() {
       ? item.phoneNumbers[0].number 
       : null;
       
-    const CardComponent = isSelectMode ? Pressable : View;
-    
     return (
-      <CardComponent 
-        style={[styles.contactCard, { backgroundColor: theme === 'dark' ? '#1c1c1e' : '#fff' }]}
-        onPress={isSelectMode ? () => {
-          router.navigate({ 
-            pathname: '/new-survey', 
-            params: { selectedContact: phoneNumber, selectedClient: item.name } 
-          });
-        } : undefined}
+      <Pressable 
+        style={({ pressed }) => [
+          styles.contactCard, 
+          { backgroundColor: activeColors.card, borderColor: activeColors.border },
+          pressed && { opacity: 0.85 }
+        ]}
+        onPress={() => {
+          if (isSelectMode) {
+            router.navigate({ 
+              pathname: '/new-survey', 
+              params: { selectedContact: phoneNumber, selectedClient: item.name } 
+            });
+          } else if (phoneNumber) {
+            copyToClipboard(phoneNumber);
+          }
+        }}
       >
         <View style={styles.contactLeft}>
-          <View style={[styles.avatar, { backgroundColor: Colors[theme].tint }]}>
-            <Text style={[styles.avatarText, { color: theme === 'dark' ? '#000' : '#fff' }]}>
+          <View style={[styles.avatar, { backgroundColor: activeColors.tint }]}>
+            <Text style={styles.avatarText}>
               {getInitial(item.name)}
             </Text>
           </View>
           <View style={styles.contactInfo}>
-            <Text style={[styles.contactName, { color: Colors[theme].text }]} numberOfLines={1}>
+            <Text style={[styles.contactName, { color: activeColors.text }]} numberOfLines={1}>
               {item.name || 'Unknown Contact'}
             </Text>
             <Text style={styles.contactNumber}>
-              {phoneNumber || 'No Number'}
+              {phoneNumber || 'No Phone Number'}
             </Text>
           </View>
         </View>
         
-        {phoneNumber && (
-          <Pressable 
-            style={({ pressed }) => [
-              styles.copyButton,
-              { 
-                backgroundColor: theme === 'dark' ? '#333' : '#f0f0f0',
-                opacity: pressed ? 0.6 : 1
-              }
-            ]}
-            onPress={() => copyToClipboard(phoneNumber)}
-          >
-            <Ionicons name="copy-outline" size={20} color={Colors[theme].tint} />
-          </Pressable>
+        {isSelectMode ? (
+          <Ionicons name="chevron-forward" size={16} color={activeColors.icon} />
+        ) : (
+          phoneNumber && (
+            <Pressable 
+              style={styles.copyButton}
+              onPress={() => copyToClipboard(phoneNumber)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="copy-outline" size={18} color={activeColors.tint} />
+            </Pressable>
+          )
         )}
-      </CardComponent>
+      </Pressable>
     );
   };
 
@@ -145,24 +152,24 @@ export default function ContactsScreen() {
       <View style={styles.emptyContainer}>
         <Ionicons 
           name={permissionGranted === false ? 'lock-closed-outline' : 'people-outline'} 
-          size={80} 
-          color="#888" 
+          size={48} 
+          color="#64748B" 
         />
-        <Text style={[styles.emptyTitle, { color: Colors[theme].text }]}>
-          {permissionGranted === false ? 'Permission Denied' : 'No Contacts Found'}
+        <Text style={[styles.emptyTitle, { color: activeColors.text }]}>
+          {permissionGranted === false ? 'Permission Required' : 'No Contacts'}
         </Text>
         <Text style={styles.emptySubtitle}>
           {permissionGranted === false 
-            ? 'Please enable contacts access in your settings.' 
-            : 'Try adjusting your search or add some contacts.'}
+            ? 'Please enable contacts access in your device settings.' 
+            : 'Try adjusting your search query.'}
         </Text>
         
         {permissionGranted === false && (
           <Pressable 
-            style={[styles.refreshButton, { backgroundColor: Colors[theme].tint }]}
+            style={[styles.grantBtn, { backgroundColor: activeColors.tint }]}
             onPress={fetchContacts}
           >
-            <Text style={[styles.refreshButtonText, { color: theme === 'dark' ? '#000' : '#fff' }]}>
+            <Text style={styles.grantBtnText}>
               Request Permission
             </Text>
           </Pressable>
@@ -172,34 +179,38 @@ export default function ContactsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <Text style={[styles.header, { color: Colors[theme].text }]}>Contacts</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: activeColors.background }]} edges={['top']}>
+      <View style={styles.headerContainer}>
+        <Text style={[styles.header, { color: activeColors.text }]}>Contacts</Text>
+        <Text style={styles.subtitle}>Select a contact to auto-fill the client details.</Text>
+      </View>
       
-      <View style={[styles.searchContainer, { backgroundColor: theme === 'dark' ? '#1c1c1e' : '#f0f0f0' }]}>
-        <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+      {/* Sticky Search bar */}
+      <View style={[styles.searchContainer, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
+        <Ionicons name="search-outline" size={18} color="#64748B" style={styles.searchIcon} />
         <TextInput
-          style={[styles.searchInput, { color: Colors[theme].text }]}
-          placeholder="Search Contacts"
-          placeholderTextColor="#888"
+          style={[styles.searchInput, { color: activeColors.text }]}
+          placeholder="Search contacts..."
+          placeholderTextColor="#64748B"
           value={searchQuery}
           onChangeText={handleSearch}
         />
         {searchQuery.length > 0 && (
           <Pressable onPress={() => handleSearch('')}>
-            <Ionicons name="close-circle" size={20} color="#888" />
+            <Ionicons name="close-circle" size={18} color="#64748B" />
           </Pressable>
         )}
       </View>
 
       <View style={styles.counterContainer}>
-        <Text style={[styles.counterText, { color: Colors[theme].tint }]}>
+        <Text style={[styles.counterText, { color: activeColors.tint }]}>
           {filteredContacts.length} {filteredContacts.length === 1 ? 'Contact' : 'Contacts'}
         </Text>
       </View>
 
       {loading ? (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors[theme].tint} />
+          <ActivityIndicator size="large" color={activeColors.tint} />
         </View>
       ) : (
         <FlatList
@@ -213,56 +224,64 @@ export default function ContactsScreen() {
             <RefreshControl 
               refreshing={refreshing} 
               onRefresh={onRefresh} 
-              tintColor={Colors[theme].tint}
-              colors={[Colors[theme].tint]}
+              tintColor={activeColors.tint}
+              colors={[activeColors.tint]}
             />
           }
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
+  },
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   header: {
-    fontSize: 32,
-    fontWeight: '800',
-    paddingHorizontal: 24,
-    marginBottom: 16,
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#64748B',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 24,
-    paddingHorizontal: 16,
-    height: 50,
+    marginHorizontal: 20,
+    paddingHorizontal: 12,
+    height: 46,
     borderRadius: 12,
-    marginBottom: 16,
+    borderWidth: 1,
+    marginBottom: 12,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     height: '100%',
   },
   counterContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 12,
+    paddingHorizontal: 20,
+    marginBottom: 8,
   },
   counterText: {
-    fontSize: 14,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   listContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingBottom: 24,
   },
   emptyListContent: {
@@ -273,14 +292,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: 12,
     borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    marginBottom: 10,
   },
   contactLeft: {
     flexDirection: 'row',
@@ -288,37 +303,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   avatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFF',
   },
   contactInfo: {
     flex: 1,
     justifyContent: 'center',
   },
   contactName: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 4,
   },
   contactNumber: {
-    fontSize: 14,
-    color: '#888',
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
   },
   copyButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
+    padding: 6,
   },
   loaderContainer: {
     flex: 1,
@@ -331,25 +342,26 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 12,
+    marginBottom: 4,
   },
   emptySubtitle: {
-    fontSize: 15,
-    color: '#888',
+    fontSize: 14,
+    color: '#64748B',
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    lineHeight: 20,
+    marginBottom: 16,
   },
-  refreshButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 14,
+  grantBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 12,
   },
-  refreshButtonText: {
-    fontSize: 16,
+  grantBtnText: {
+    color: '#FFF',
+    fontSize: 14,
     fontWeight: '600',
   },
 });
