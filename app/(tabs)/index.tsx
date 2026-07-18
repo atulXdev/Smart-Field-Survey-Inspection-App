@@ -1,12 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useContext } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { SurveyContext } from '../context/SurveyContext';
 
 export default function DashboardScreen() {
+  const { surveys } = useContext(SurveyContext);
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
+
         {/* Custom App Header / Welcome Screen */}
         <View style={styles.header}>
           <View>
@@ -47,30 +53,32 @@ export default function DashboardScreen() {
             <Text style={styles.subText}>Completed so far</Text>
           </View>
           <View style={styles.countCircle}>
-            <Text style={styles.countText}>5</Text>
+            <Text style={styles.countText}>{surveys.length}</Text>
           </View>
         </View>
 
         {/* Quick Action Cards */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionsContainer}>
-          <Pressable 
+          <Pressable
             style={({ pressed }) => [
               styles.actionButton,
               styles.primaryButton,
               pressed && styles.buttonPressed
             ]}
+            onPress={() => router.push('/new-survey')}
           >
             <Ionicons name="add-circle" size={24} color="#FFF" style={styles.actionIcon} />
             <Text style={styles.primaryActionText}>New Survey</Text>
           </Pressable>
 
-          <Pressable 
+          <Pressable
             style={({ pressed }) => [
               styles.actionButton,
               styles.secondaryButton,
               pressed && styles.buttonPressed
             ]}
+            onPress={() => router.push('/history')}
           >
             <Ionicons name="time" size={24} color="#4F46E5" style={styles.actionIcon} />
             <Text style={styles.secondaryActionText}>View History</Text>
@@ -82,31 +90,26 @@ export default function DashboardScreen() {
           <Text style={styles.sectionTitle}>Recent Surveys</Text>
           <Text style={styles.seeAllText}>See all</Text>
         </View>
-        
+
         <View style={styles.listCard}>
-          <Pressable style={({ pressed }) => [styles.surveyItem, pressed && styles.itemPressed]}>
-            <View style={styles.surveyIconContainer}>
-              <Ionicons name="location" size={20} color="#10B981" />
-            </View>
-            <View style={styles.surveyItemContent}>
-              <Text style={styles.surveyTitle}>Site A Inspection</Text>
-              <Text style={styles.surveyClient}>Client: Acme Corp</Text>
-            </View>
-            <Text style={styles.surveyDate}>10:30 AM</Text>
-          </Pressable>
-          
-          <View style={styles.divider} />
-          
-          <Pressable style={({ pressed }) => [styles.surveyItem, pressed && styles.itemPressed]}>
-            <View style={styles.surveyIconContainer}>
-              <Ionicons name="location" size={20} color="#F59E0B" />
-            </View>
-            <View style={styles.surveyItemContent}>
-              <Text style={styles.surveyTitle}>Downtown Plot</Text>
-              <Text style={styles.surveyClient}>Client: Globex</Text>
-            </View>
-            <Text style={styles.surveyDate}>09:15 AM</Text>
-          </Pressable>
+          {surveys.slice(0, 3).map((survey, index) => (
+            <React.Fragment key={survey.id}>
+              <Pressable style={({ pressed }) => [styles.surveyItem, pressed && styles.itemPressed]}>
+                <View style={styles.surveyIconContainer}>
+                  <Ionicons name="location" size={20} color={index === 0 ? "#10B981" : "#F59E0B"} />
+                </View>
+                <View style={styles.surveyItemContent}>
+                  <Text style={styles.surveyTitle}>{survey.siteName}</Text>
+                  <Text style={styles.surveyClient}>Client: {survey.clientName}</Text>
+                </View>
+                <Text style={styles.surveyDate}>{survey.date}</Text>
+              </Pressable>
+              {index < Math.min(surveys.length, 3) - 1 && <View style={styles.divider} />}
+            </React.Fragment>
+          ))}
+          {surveys.length === 0 && (
+            <Text style={{ padding: 16, textAlign: 'center', color: '#6B7280' }}>No surveys yet.</Text>
+          )}
         </View>
 
         {/* Bottom padding for scroll */}
