@@ -7,6 +7,9 @@ export type Survey = {
   description: string;
   priority: string;
   date: string;
+  contact?: string;
+  location?: string;
+  photo?: string;
 };
 
 type SurveyContextType = {

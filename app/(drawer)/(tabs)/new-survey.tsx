@@ -12,19 +12,45 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as LocationApi from 'expo-location';
 import { SurveyContext } from '../../context/SurveyContext';
 
 export default function NewSurveyScreen() {
   const { addSurvey } = useContext(SurveyContext);
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [siteName, setSiteName] = useState('');
   const [clientName, setClientName] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Medium'); // Low, Medium, High
   const [surveyDate, setSurveyDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [contact, setContact] = useState('');
+  const [location, setLocation] = useState('');
+  const [photoUri, setPhotoUri] = useState('');
+
+  React.useEffect(() => {
+    if (params.photoUri) setPhotoUri(params.photoUri as string);
+    if (params.selectedContact) setContact(params.selectedContact as string);
+    if (params.selectedClient) setClientName(params.selectedClient as string);
+  }, [params.photoUri, params.selectedContact, params.selectedClient]);
+
+  const handleGetLocation = async () => {
+    try {
+      let { status } = await LocationApi.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location permission is required.');
+        return;
+      }
+      const loc = await LocationApi.getCurrentPositionAsync({});
+      const coordsStr = `${loc.coords.latitude.toFixed(4)}, ${loc.coords.longitude.toFixed(4)}`;
+      setLocation(coordsStr);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to get location.');
+    }
+  };
 
   const onChangeDate = (event: any, selectedDate?: Date) => {
     // Close the picker on Android after selection
@@ -51,7 +77,7 @@ export default function NewSurveyScreen() {
       return;
     }
 
-    // 2. Process submission
+    // 2. Pass to preview screen
     const formattedDate = surveyDate.toLocaleDateString();
     const newSurvey = {
       id: Date.now().toString(),
@@ -60,19 +86,15 @@ export default function NewSurveyScreen() {
       description,
       priority,
       date: formattedDate,
+      contact,
+      location,
+      photo: photoUri,
     };
-    addSurvey(newSurvey);
-
-    Alert.alert('Success', 'Survey has been created successfully!', [
-      { text: 'OK', onPress: () => router.push('/') }
-    ]);
     
-    // 3. Clear form
-    setSiteName('');
-    setClientName('');
-    setDescription('');
-    setPriority('Medium');
-    setSurveyDate(new Date());
+    router.push({
+      pathname: '/survey-preview',
+      params: newSurvey
+    });
   };
 
   return (
@@ -172,6 +194,61 @@ export default function NewSurveyScreen() {
               </View>
             </View>
 
+            {/* Smart Actions */}
+            <View style={styles.actionButtonsRow}>
+              <Pressable style={styles.actionBtn} onPress={() => router.push({ pathname: '/camera', params: { mode: 'select' } })}>
+                <Ionicons name="camera-outline" size={24} color="#4F46E5" />
+                <Text style={styles.actionBtnText}>Add Photo</Text>
+              </Pressable>
+              
+              <Pressable style={styles.actionBtn} onPress={handleGetLocation}>
+                <Ionicons name="location-outline" size={24} color="#4F46E5" />
+                <Text style={styles.actionBtnText}>Get GPS</Text>
+              </Pressable>
+              
+              <Pressable style={styles.actionBtn} onPress={() => router.push({ pathname: '/contacts', params: { mode: 'select' } })}>
+                <Ionicons name="person-outline" size={24} color="#4F46E5" />
+                <Text style={styles.actionBtnText}>Get Contact</Text>
+              </Pressable>
+            </View>
+
+            {photoUri ? (
+              <View style={styles.photoPreviewContainer}>
+                <Text style={styles.label}>Attached Photo</Text>
+                <Text style={styles.photoUriText} numberOfLines={1}>{photoUri}</Text>
+              </View>
+            ) : null}
+
+            {/* Contact Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Contact Number (Optional)</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="call-outline" size={20} color="#6B7280" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Paste or type contact number"
+                  placeholderTextColor="#9CA3AF"
+                  value={contact}
+                  onChangeText={setContact}
+                />
+              </View>
+            </View>
+
+            {/* Location Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Location Coordinates (Optional)</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="location-outline" size={20} color="#6B7280" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Paste or type coordinates"
+                  placeholderTextColor="#9CA3AF"
+                  value={location}
+                  onChangeText={setLocation}
+                />
+              </View>
+            </View>
+
             {/* Description Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Description (Optional)</Text>
@@ -197,8 +274,8 @@ export default function NewSurveyScreen() {
               ]}
               onPress={handleSubmit}
             >
-              <Ionicons name="save-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-              <Text style={styles.submitButtonText}>Save Survey</Text>
+              <Ionicons name="eye-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+              <Text style={styles.submitButtonText}>Preview Survey</Text>
             </Pressable>
 
           </View>
@@ -312,6 +389,36 @@ const styles = StyleSheet.create({
   },
   priorityTextActive: {
     color: '#4F46E5',
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    gap: 10,
+  },
+  actionBtn: {
+    flex: 1,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#4F46E5',
+  },
+  actionBtnText: {
+    color: '#4F46E5',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  photoPreviewContainer: {
+    marginBottom: 20,
+  },
+  photoUriText: {
+    fontSize: 14,
+    color: '#10B981',
+    fontWeight: '500',
+    marginTop: 4,
   },
   submitButton: {
     backgroundColor: '#4F46E5',

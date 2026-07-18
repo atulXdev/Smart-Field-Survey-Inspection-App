@@ -45,6 +45,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons size={28} name="person" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="survey-preview"
+        options={{
+          href: null,
+          title: 'Preview',
+        }}
+      />
     </Tabs>
   );
 }

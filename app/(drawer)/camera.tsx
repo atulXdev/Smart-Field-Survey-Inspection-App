@@ -12,8 +12,12 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 export default function CameraScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const isSelectMode = params.mode === 'select';
   const [permission, requestPermission] = useCameraPermissions();
   const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions({ writeOnly: true });
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -125,10 +129,17 @@ export default function CameraScreen() {
               <Text style={styles.buttonText}>Retake</Text>
             </Pressable>
 
-            <Pressable style={[styles.actionButton, styles.saveButton]} onPress={handleSaveToGallery}>
-              <Ionicons name="download-outline" size={20} color="#FFF" />
-              <Text style={styles.buttonText}>Save</Text>
-            </Pressable>
+            {isSelectMode ? (
+              <Pressable style={[styles.actionButton, styles.saveButton]} onPress={() => router.navigate({ pathname: '/new-survey', params: { photoUri } })}>
+                <Ionicons name="checkmark-outline" size={20} color="#FFF" />
+                <Text style={styles.buttonText}>Use</Text>
+              </Pressable>
+            ) : (
+              <Pressable style={[styles.actionButton, styles.saveButton]} onPress={handleSaveToGallery}>
+                <Ionicons name="download-outline" size={20} color="#FFF" />
+                <Text style={styles.buttonText}>Save</Text>
+              </Pressable>
+            )}
 
             <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete}>
               <Ionicons name="trash-outline" size={20} color="#FFF" />

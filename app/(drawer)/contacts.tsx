@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import * as Contacts from 'expo-contacts';
 import * as Clipboard from 'expo-clipboard';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -23,6 +24,10 @@ export default function ContactsScreen() {
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const isSelectMode = params.mode === 'select';
 
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? 'dark' : 'light';
@@ -87,8 +92,18 @@ export default function ContactsScreen() {
       ? item.phoneNumbers[0].number 
       : null;
       
+    const CardComponent = isSelectMode ? Pressable : View;
+    
     return (
-      <View style={[styles.contactCard, { backgroundColor: theme === 'dark' ? '#1c1c1e' : '#fff' }]}>
+      <CardComponent 
+        style={[styles.contactCard, { backgroundColor: theme === 'dark' ? '#1c1c1e' : '#fff' }]}
+        onPress={isSelectMode ? () => {
+          router.navigate({ 
+            pathname: '/new-survey', 
+            params: { selectedContact: phoneNumber, selectedClient: item.name } 
+          });
+        } : undefined}
+      >
         <View style={styles.contactLeft}>
           <View style={[styles.avatar, { backgroundColor: Colors[theme].tint }]}>
             <Text style={[styles.avatarText, { color: theme === 'dark' ? '#000' : '#fff' }]}>
@@ -119,7 +134,7 @@ export default function ContactsScreen() {
             <Ionicons name="copy-outline" size={20} color={Colors[theme].tint} />
           </Pressable>
         )}
-      </View>
+      </CardComponent>
     );
   };
 
