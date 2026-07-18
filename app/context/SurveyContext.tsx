@@ -49,3 +49,7 @@ export const SurveyProvider = ({ children }: { children: ReactNode }) => {
     </SurveyContext.Provider>
   );
 };
+
+export default function SurveyContextComponent() {
+  return null;
+}

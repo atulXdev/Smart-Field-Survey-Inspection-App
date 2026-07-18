@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { SurveyContext } from '../context/SurveyContext';
+import { SurveyContext } from '../../context/SurveyContext';
 
 export default function DashboardScreen() {
   const { surveys } = useContext(SurveyContext);

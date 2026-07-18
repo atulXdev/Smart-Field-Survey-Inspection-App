@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SurveyContext } from '../context/SurveyContext';
+import { SurveyContext } from '../../context/SurveyContext';
 
 export default function NewSurveyScreen() {
   const { addSurvey } = useContext(SurveyContext);

@@ -31,26 +31,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="camera"
-        options={{
-          title: 'Camera',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="camera" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="history"
         options={{
           title: 'History',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="time" color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="location"
-        options={{
-          title: 'Location',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="location" color={color} />,
-        }}
-      />
+
       <Tabs.Screen
         name="profile"
         options={{

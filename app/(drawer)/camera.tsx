@@ -155,15 +155,14 @@ export default function CameraScreen() {
           facing="back" 
           ref={cameraRef}
           onCameraReady={() => setIsReady(true)}
-        >
-          <View style={styles.cameraOverlay}>
-            <View style={styles.captureContainer}>
-              <Pressable style={styles.captureButton} onPress={takePicture}>
-                <View style={styles.captureInnerCircle} />
-              </Pressable>
-            </View>
+        />
+        <View style={[styles.cameraOverlay, StyleSheet.absoluteFill]}>
+          <View style={styles.captureContainer}>
+            <Pressable style={styles.captureButton} onPress={takePicture}>
+              <View style={styles.captureInnerCircle} />
+            </Pressable>
           </View>
-        </CameraView>
+        </View>
       </View>
     </SafeAreaView>
   );
