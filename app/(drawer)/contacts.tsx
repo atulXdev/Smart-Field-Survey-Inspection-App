@@ -14,7 +14,7 @@ import * as Contacts from 'expo-contacts';
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts, Rounded, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -99,7 +99,7 @@ export default function ContactsScreen() {
         style={({ pressed }) => [
           styles.contactCard, 
           { backgroundColor: activeColors.card, borderColor: activeColors.border },
-          pressed && { opacity: 0.85 }
+          pressed && { backgroundColor: activeColors.surfaceElevated }
         ]}
         onPress={() => {
           if (isSelectMode) {
@@ -113,8 +113,8 @@ export default function ContactsScreen() {
         }}
       >
         <View style={styles.contactLeft}>
-          <View style={[styles.avatar, { backgroundColor: activeColors.tint }]}>
-            <Text style={styles.avatarText}>
+          <View style={[styles.avatar, { backgroundColor: activeColors.primary }]}>
+            <Text style={[styles.avatarText, { color: activeColors.onPrimary }]}>
               {getInitial(item.name)}
             </Text>
           </View>
@@ -122,14 +122,14 @@ export default function ContactsScreen() {
             <Text style={[styles.contactName, { color: activeColors.text }]} numberOfLines={1}>
               {item.name || 'Unknown Contact'}
             </Text>
-            <Text style={styles.contactNumber}>
+            <Text style={[styles.contactNumber, { color: activeColors.muted, fontFamily: Fonts.mono }]}>
               {phoneNumber || 'No Phone Number'}
             </Text>
           </View>
         </View>
         
         {isSelectMode ? (
-          <Ionicons name="chevron-forward" size={16} color={activeColors.icon} />
+          <Ionicons name="chevron-forward" size={16} color={activeColors.muted} />
         ) : (
           phoneNumber && (
             <Pressable 
@@ -137,7 +137,7 @@ export default function ContactsScreen() {
               onPress={() => copyToClipboard(phoneNumber)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="copy-outline" size={18} color={activeColors.tint} />
+              <Ionicons name="copy-outline" size={18} color={activeColors.primary} />
             </Pressable>
           )
         )}
@@ -153,12 +153,12 @@ export default function ContactsScreen() {
         <Ionicons 
           name={permissionGranted === false ? 'lock-closed-outline' : 'people-outline'} 
           size={48} 
-          color="#64748B" 
+          color={activeColors.muted} 
         />
         <Text style={[styles.emptyTitle, { color: activeColors.text }]}>
           {permissionGranted === false ? 'Permission Required' : 'No Contacts'}
         </Text>
-        <Text style={styles.emptySubtitle}>
+        <Text style={[styles.emptySubtitle, { color: activeColors.muted }]}>
           {permissionGranted === false 
             ? 'Please enable contacts access in your device settings.' 
             : 'Try adjusting your search query.'}
@@ -166,10 +166,10 @@ export default function ContactsScreen() {
         
         {permissionGranted === false && (
           <Pressable 
-            style={[styles.grantBtn, { backgroundColor: activeColors.tint }]}
+            style={[styles.grantBtn, { backgroundColor: activeColors.primary }]}
             onPress={fetchContacts}
           >
-            <Text style={styles.grantBtnText}>
+            <Text style={[styles.grantBtnText, { color: activeColors.onPrimary }]}>
               Request Permission
             </Text>
           </Pressable>
@@ -182,40 +182,40 @@ export default function ContactsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: activeColors.background }]} edges={['top']}>
       <View style={styles.headerContainer}>
         <Text style={[styles.header, { color: activeColors.text }]}>Contacts</Text>
-        <Text style={styles.subtitle}>Select a contact to auto-fill the client details.</Text>
+        <Text style={[styles.subtitle, { color: activeColors.muted }]}>Select a contact to auto-fill the client details.</Text>
       </View>
       
       {/* Sticky Search bar */}
       <View style={[styles.searchContainer, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
-        <Ionicons name="search-outline" size={18} color="#64748B" style={styles.searchIcon} />
+        <Ionicons name="search-outline" size={18} color={activeColors.muted} style={styles.searchIcon} />
         <TextInput
           style={[styles.searchInput, { color: activeColors.text }]}
           placeholder="Search contacts..."
-          placeholderTextColor="#64748B"
+          placeholderTextColor={activeColors.muted}
           value={searchQuery}
           onChangeText={handleSearch}
         />
         {searchQuery.length > 0 && (
           <Pressable onPress={() => handleSearch('')}>
-            <Ionicons name="close-circle" size={18} color="#64748B" />
+            <Ionicons name="close-circle" size={18} color={activeColors.muted} />
           </Pressable>
         )}
       </View>
 
       <View style={styles.counterContainer}>
-        <Text style={[styles.counterText, { color: activeColors.tint }]}>
+        <Text style={[styles.counterText, { color: activeColors.primary, fontFamily: Fonts.mono }]}>
           {filteredContacts.length} {filteredContacts.length === 1 ? 'Contact' : 'Contacts'}
         </Text>
       </View>
 
       {loading ? (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={activeColors.tint} />
+          <ActivityIndicator size="large" color={activeColors.primary} />
         </View>
       ) : (
         <FlatList
           data={filteredContacts}
-          keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+          keyExtractor={(item, index) => (item as any).id ? (item as any).id.toString() : index.toString()}
           renderItem={renderItem}
           contentContainerStyle={filteredContacts.length === 0 ? styles.emptyListContent : styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -224,8 +224,8 @@ export default function ContactsScreen() {
             <RefreshControl 
               refreshing={refreshing} 
               onRefresh={onRefresh} 
-              tintColor={activeColors.tint}
-              colors={[activeColors.tint]}
+              tintColor={activeColors.primary}
+              colors={[activeColors.primary]}
             />
           }
         />
@@ -239,29 +239,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs,
   },
   header: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700',
     letterSpacing: -0.5,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
+    marginHorizontal: Spacing.md,
     paddingHorizontal: 12,
-    height: 46,
-    borderRadius: 12,
+    height: 44,
+    borderRadius: Rounded.md,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: Spacing.xs,
   },
   searchIcon: {
     marginRight: 8,
@@ -272,7 +271,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   counterContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.md,
     marginBottom: 8,
   },
   counterText: {
@@ -281,8 +280,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
   emptyListContent: {
     flexGrow: 1,
@@ -293,7 +292,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
-    borderRadius: 16,
+    borderRadius: Rounded.xl,
     borderWidth: 1,
     marginBottom: 10,
   },
@@ -305,7 +304,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: Rounded.md,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -313,7 +312,6 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFF',
   },
   contactInfo: {
     flex: 1,
@@ -325,7 +323,6 @@ const styles = StyleSheet.create({
   },
   contactNumber: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 2,
   },
   copyButton: {
@@ -339,7 +336,7 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: Spacing.lg,
   },
   emptyTitle: {
     fontSize: 18,
@@ -349,7 +346,6 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#64748B',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,
@@ -357,10 +353,9 @@ const styles = StyleSheet.create({
   grantBtn: {
     paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: Rounded.pill,
   },
   grantBtnText: {
-    color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
   },

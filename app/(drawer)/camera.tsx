@@ -13,6 +13,8 @@ import * as MediaLibrary from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Colors, Fonts, Rounded, Spacing } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -27,22 +29,26 @@ export default function CameraScreen() {
   const [flash, setFlash] = useState<'off' | 'on'>('off');
   
   const cameraRef = useRef<CameraView>(null);
+  
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? 'dark' : 'light';
+  const activeColors = Colors[theme];
 
   if (!permission) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View style={[styles.centerContainer, { backgroundColor: activeColors.background }]}>
+        <ActivityIndicator size="large" color={activeColors.primary} />
       </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <View style={styles.centerContainer}>
-        <Ionicons name="camera-outline" size={48} color="#64748B" />
-        <Text style={styles.permissionText}>Camera access is required to capture site inspections.</Text>
-        <Pressable style={styles.grantButton} onPress={requestPermission}>
-          <Text style={styles.grantButtonText}>Grant Camera Permission</Text>
+      <View style={[styles.centerContainer, { backgroundColor: activeColors.background }]}>
+        <Ionicons name="camera-outline" size={48} color={activeColors.muted} />
+        <Text style={[styles.permissionText, { color: activeColors.muted }]}>Camera access is required to capture site inspections.</Text>
+        <Pressable style={[styles.grantButton, { backgroundColor: activeColors.primary }]} onPress={requestPermission}>
+          <Text style={[styles.grantButtonText, { color: activeColors.onPrimary }]}>Grant Camera Permission</Text>
         </Pressable>
       </View>
     );
@@ -128,19 +134,19 @@ export default function CameraScreen() {
 
           {isSelectMode ? (
             <Pressable 
-              style={[styles.primaryActionBtn, { backgroundColor: '#16A34A' }]} 
+              style={[styles.primaryActionBtn, { backgroundColor: activeColors.primary }]} 
               onPress={() => router.navigate({ pathname: '/new-survey', params: { photoUri } })}
             >
-              <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" style={{ marginRight: 6 }} />
-              <Text style={styles.primaryActionBtnText}>Use Photo</Text>
+              <Ionicons name="checkmark-circle-outline" size={20} color={activeColors.onPrimary} style={{ marginRight: 6 }} />
+              <Text style={[styles.primaryActionBtnText, { color: activeColors.onPrimary }]}>Use Photo</Text>
             </Pressable>
           ) : (
             <Pressable 
-              style={[styles.primaryActionBtn, { backgroundColor: '#2563EB' }]} 
+              style={[styles.primaryActionBtn, { backgroundColor: activeColors.primary }]} 
               onPress={handleSaveToGallery}
             >
-              <Ionicons name="download-outline" size={20} color="#FFF" style={{ marginRight: 6 }} />
-              <Text style={styles.primaryActionBtnText}>Save to Gallery</Text>
+              <Ionicons name="download-outline" size={20} color={activeColors.onPrimary} style={{ marginRight: 6 }} />
+              <Text style={[styles.primaryActionBtnText, { color: activeColors.onPrimary }]}>Save Gallery</Text>
             </Pressable>
           )}
 
@@ -165,7 +171,7 @@ export default function CameraScreen() {
           <Ionicons 
             name={flash === 'on' ? "flash" : "flash-off-outline"} 
             size={22} 
-            color={flash === 'on' ? "#D97706" : "#FFF"} 
+            color={flash === 'on' ? activeColors.primary : "#FFF"} 
           />
         </Pressable>
       </View>
@@ -173,7 +179,7 @@ export default function CameraScreen() {
       <View style={styles.cameraWrapper}>
         {!isReady && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#2563EB" />
+            <ActivityIndicator size="large" color={activeColors.primary} />
             <Text style={styles.loadingText}>Initializing camera...</Text>
           </View>
         )}
@@ -213,25 +219,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    padding: 24,
+    padding: Spacing.lg,
   },
   permissionText: {
     fontSize: 15,
-    color: '#64748B',
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 24,
     lineHeight: 22,
   },
   grantButton: {
-    backgroundColor: '#2563EB',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: Rounded.pill,
   },
   grantButtonText: {
-    color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#1E2329',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -324,23 +326,23 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: Rounded.sm,
   },
   timestampText: {
     color: '#FFF',
     fontSize: 11,
     fontWeight: '500',
+    fontFamily: Fonts.mono,
   },
   primaryActionBtn: {
     height: 48,
     paddingHorizontal: 20,
-    borderRadius: 24,
+    borderRadius: Rounded.pill,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryActionBtnText: {
-    color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
   },

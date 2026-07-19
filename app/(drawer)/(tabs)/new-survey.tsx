@@ -17,7 +17,7 @@ import { useGlobalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as LocationApi from 'expo-location';
 import { SurveyContext } from '../../context/SurveyContext';
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts, Rounded, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function NewSurveyScreen() {
@@ -132,7 +132,7 @@ export default function NewSurveyScreen() {
           
           <View style={styles.header}>
             <Text style={[styles.title, { color: activeColors.text }]}>New Survey</Text>
-            <Text style={styles.subtitle}>Begin a new inspection report.</Text>
+            <Text style={[styles.subtitle, { color: activeColors.muted }]}>Begin a new inspection report.</Text>
           </View>
 
           {/* Section 1: Basic Information */}
@@ -142,12 +142,12 @@ export default function NewSurveyScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: activeColors.text }]}>Site Name <Text style={{ color: activeColors.danger }}>*</Text></Text>
-              <View style={[styles.inputContainer, { borderColor: siteNameError ? activeColors.danger : activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+              <View style={[styles.inputContainer, { borderColor: siteNameError ? activeColors.danger : activeColors.border, backgroundColor: activeColors.background }]}>
                 <Ionicons name="business-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: activeColors.text }]}
                   placeholder="e.g., Downtown Plaza"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor={activeColors.muted}
                   value={siteName}
                   onChangeText={(text) => {
                     setSiteName(text);
@@ -160,12 +160,12 @@ export default function NewSurveyScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: activeColors.text }]}>Client Name <Text style={{ color: activeColors.danger }}>*</Text></Text>
-              <View style={[styles.inputContainer, { borderColor: clientNameError ? activeColors.danger : activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+              <View style={[styles.inputContainer, { borderColor: clientNameError ? activeColors.danger : activeColors.border, backgroundColor: activeColors.background }]}>
                 <Ionicons name="person-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: activeColors.text }]}
                   placeholder="e.g., Acme Corp"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor={activeColors.muted}
                   value={clientName}
                   onChangeText={(text) => {
                     setClientName(text);
@@ -185,11 +185,11 @@ export default function NewSurveyScreen() {
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: activeColors.text }]}>Date <Text style={{ color: activeColors.danger }}>*</Text></Text>
               <Pressable 
-                style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}
+                style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: activeColors.background }]}
                 onPress={() => setShowDatePicker(true)}
               >
                 <Ionicons name="calendar-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
-                <Text style={[styles.inputText, { color: activeColors.text }]}>
+                <Text style={[styles.inputText, { color: activeColors.text, fontFamily: Fonts.mono }]}>
                   {surveyDate.toLocaleDateString()}
                 </Text>
               </Pressable>
@@ -221,15 +221,15 @@ export default function NewSurveyScreen() {
                       key={level}
                       style={[
                         styles.priorityButton,
-                        { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' },
-                        isActive && { borderColor: getLevelColor(), backgroundColor: getLevelColor() + '10' }
+                        { borderColor: activeColors.border, backgroundColor: activeColors.background },
+                        isActive && { borderColor: getLevelColor(), backgroundColor: getLevelColor() + '15' }
                       ]}
                       onPress={() => setPriority(level)}
                     >
                       <Text 
                         style={[
                           styles.priorityText,
-                          { color: activeColors.icon },
+                          { color: activeColors.muted },
                           isActive && { color: getLevelColor(), fontWeight: '600' }
                         ]}
                       >
@@ -249,20 +249,20 @@ export default function NewSurveyScreen() {
 
             {/* Smart Action Rows */}
             {/* Photo Row */}
-            <View style={styles.actionRow}>
+            <View style={[styles.actionRow, { borderBottomColor: activeColors.border }]}>
               <View style={styles.actionRowLeft}>
                 {photoUri ? (
                   <View style={styles.thumbnailContainer}>
                     <Image source={{ uri: photoUri }} style={styles.thumbnail} />
                   </View>
                 ) : (
-                  <View style={[styles.actionIconContainer, { backgroundColor: activeColors.tint + '10' }]}>
-                    <Ionicons name="camera-outline" size={18} color={activeColors.tint} />
+                  <View style={[styles.actionIconContainer, { backgroundColor: activeColors.primary + '15' }]}>
+                    <Ionicons name="camera-outline" size={18} color={activeColors.primary} />
                   </View>
                 )}
                 <View style={styles.actionRowTextContainer}>
                   <Text style={[styles.actionRowTitle, { color: activeColors.text }]}>Photo Attachment</Text>
-                  <Text style={styles.actionRowStatus}>
+                  <Text style={[styles.actionRowStatus, { color: activeColors.muted }]}>
                     {photoUri ? '✓ Photo Captured' : 'No photo attached'}
                   </Text>
                 </View>
@@ -270,7 +270,7 @@ export default function NewSurveyScreen() {
               <View style={styles.actionRowRight}>
                 {photoUri && (
                   <Pressable 
-                    style={styles.actionRowSecondaryBtn} 
+                    style={[styles.actionRowSecondaryBtn, { backgroundColor: activeColors.danger + '15' }]} 
                     onPress={() => setPhotoUri('')}
                   >
                     <Ionicons name="trash-outline" size={16} color={activeColors.danger} />
@@ -280,7 +280,7 @@ export default function NewSurveyScreen() {
                   style={[styles.actionRowBtn, { borderColor: activeColors.border }]}
                   onPress={() => router.push({ pathname: '/camera', params: { mode: 'select' } })}
                 >
-                  <Text style={[styles.actionRowBtnText, { color: activeColors.tint }]}>
+                  <Text style={[styles.actionRowBtnText, { color: activeColors.primary }]}>
                     {photoUri ? 'Retake' : 'Capture'}
                   </Text>
                 </Pressable>
@@ -288,14 +288,14 @@ export default function NewSurveyScreen() {
             </View>
 
             {/* GPS Row */}
-            <View style={styles.actionRow}>
+            <View style={[styles.actionRow, { borderBottomColor: activeColors.border }]}>
               <View style={styles.actionRowLeft}>
-                <View style={[styles.actionIconContainer, { backgroundColor: activeColors.tint + '10' }]}>
-                  <Ionicons name="location-outline" size={18} color={activeColors.tint} />
+                <View style={[styles.actionIconContainer, { backgroundColor: activeColors.primary + '15' }]}>
+                  <Ionicons name="location-outline" size={18} color={activeColors.primary} />
                 </View>
                 <View style={styles.actionRowTextContainer}>
                   <Text style={[styles.actionRowTitle, { color: activeColors.text }]}>GPS Coordinates</Text>
-                  <Text style={styles.actionRowStatus} numberOfLines={1}>
+                  <Text style={[styles.actionRowStatus, { color: activeColors.muted }]} numberOfLines={1}>
                     {location ? `✓ ${location}` : 'No coordinates set'}
                   </Text>
                 </View>
@@ -305,7 +305,7 @@ export default function NewSurveyScreen() {
                   style={[styles.actionRowBtn, { borderColor: activeColors.border }]}
                   onPress={handleGetLocation}
                 >
-                  <Text style={[styles.actionRowBtnText, { color: activeColors.tint }]}>
+                  <Text style={[styles.actionRowBtnText, { color: activeColors.primary }]}>
                     {location ? 'Refetch' : 'Get GPS'}
                   </Text>
                 </Pressable>
@@ -313,14 +313,14 @@ export default function NewSurveyScreen() {
             </View>
 
             {/* Contacts Row */}
-            <View style={styles.actionRow}>
+            <View style={[styles.actionRow, { borderBottomColor: activeColors.border }]}>
               <View style={styles.actionRowLeft}>
-                <View style={[styles.actionIconContainer, { backgroundColor: activeColors.tint + '10' }]}>
-                  <Ionicons name="person-outline" size={18} color={activeColors.tint} />
+                <View style={[styles.actionIconContainer, { backgroundColor: activeColors.primary + '15' }]}>
+                  <Ionicons name="person-outline" size={18} color={activeColors.primary} />
                 </View>
                 <View style={styles.actionRowTextContainer}>
                   <Text style={[styles.actionRowTitle, { color: activeColors.text }]}>Client Contact</Text>
-                  <Text style={styles.actionRowStatus} numberOfLines={1}>
+                  <Text style={[styles.actionRowStatus, { color: activeColors.muted }]} numberOfLines={1}>
                     {contact ? `✓ ${contact}` : 'No contact details loaded'}
                   </Text>
                 </View>
@@ -330,7 +330,7 @@ export default function NewSurveyScreen() {
                   style={[styles.actionRowBtn, { borderColor: activeColors.border }]}
                   onPress={() => router.push({ pathname: '/contacts', params: { mode: 'select' } })}
                 >
-                  <Text style={[styles.actionRowBtnText, { color: activeColors.tint }]}>
+                  <Text style={[styles.actionRowBtnText, { color: activeColors.primary }]}>
                     {contact ? 'Change' : 'Select'}
                   </Text>
                 </Pressable>
@@ -340,12 +340,12 @@ export default function NewSurveyScreen() {
             {/* Manually Editable Optional Fields */}
             <View style={[styles.inputGroup, { marginTop: 16 }]}>
               <Text style={[styles.label, { color: activeColors.text }]}>Contact Number (Optional)</Text>
-              <View style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+              <View style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: activeColors.background }]}>
                 <Ionicons name="call-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
                 <TextInput
-                  style={[styles.input, { color: activeColors.text }]}
+                  style={[styles.input, { color: activeColors.text, fontFamily: Fonts.mono }]}
                   placeholder="Contact details"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor={activeColors.muted}
                   value={contact}
                   onChangeText={setContact}
                 />
@@ -354,12 +354,12 @@ export default function NewSurveyScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: activeColors.text }]}>Location Coordinates (Optional)</Text>
-              <View style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+              <View style={[styles.inputContainer, { borderColor: activeColors.border, backgroundColor: activeColors.background }]}>
                 <Ionicons name="map-outline" size={18} color={activeColors.icon} style={styles.inputIcon} />
                 <TextInput
-                  style={[styles.input, { color: activeColors.text }]}
+                  style={[styles.input, { color: activeColors.text, fontFamily: Fonts.mono }]}
                   placeholder="Coordinates"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor={activeColors.muted}
                   value={location}
                   onChangeText={setLocation}
                 />
@@ -374,11 +374,11 @@ export default function NewSurveyScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: activeColors.text }]}>Description (Optional)</Text>
-              <View style={[styles.inputContainer, styles.textAreaContainer, { borderColor: activeColors.border, backgroundColor: theme === 'dark' ? '#0f172a' : '#fff' }]}>
+              <View style={[styles.inputContainer, styles.textAreaContainer, { borderColor: activeColors.border, backgroundColor: activeColors.background }]}>
                 <TextInput
                   style={[styles.textArea, { color: activeColors.text }]}
                   placeholder="Add any extra details here..."
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor={activeColors.muted}
                   value={description}
                   onChangeText={setDescription}
                   multiline={true}
@@ -393,13 +393,13 @@ export default function NewSurveyScreen() {
           <Pressable 
             style={({ pressed }) => [
               styles.submitButton,
-              { backgroundColor: activeColors.tint },
+              { backgroundColor: activeColors.primary },
               pressed && styles.submitButtonPressed
             ]}
             onPress={handleSubmit}
           >
-            <Ionicons name="eye-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-            <Text style={styles.submitButtonText}>Preview Survey</Text>
+            <Ionicons name="eye-outline" size={18} color={activeColors.onPrimary} style={{ marginRight: 8 }} />
+            <Text style={[styles.submitButtonText, { color: activeColors.onPrimary }]}>Preview Survey</Text>
           </Pressable>
 
           <View style={styles.bottomSpacer} />
@@ -417,27 +417,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: Spacing.md,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700',
     letterSpacing: -0.5,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
   },
   sectionCard: {
-    borderRadius: 16,
+    borderRadius: Rounded.xl,
     borderWidth: 1,
-    padding: 16,
-    marginBottom: 16,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
   },
   sectionHeader: {
     fontSize: 16,
@@ -446,10 +445,10 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   label: {
     fontSize: 13,
@@ -460,9 +459,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: Rounded.md,
     paddingHorizontal: 12,
-    height: 48,
+    height: 44,
   },
   inputIcon: {
     marginRight: 8,
@@ -497,7 +496,7 @@ const styles = StyleSheet.create({
   priorityButton: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: Rounded.md,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
@@ -512,7 +511,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E8F0',
   },
   actionRowLeft: {
     flexDirection: 'row',
@@ -523,7 +521,7 @@ const styles = StyleSheet.create({
   actionIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: Rounded.sm,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -537,7 +535,6 @@ const styles = StyleSheet.create({
   },
   actionRowStatus: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 2,
   },
   actionRowRight: {
@@ -547,7 +544,7 @@ const styles = StyleSheet.create({
   },
   actionRowBtn: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: Rounded.md,
     paddingHorizontal: 12,
     height: 32,
     justifyContent: 'center',
@@ -560,15 +557,14 @@ const styles = StyleSheet.create({
   actionRowSecondaryBtn: {
     width: 32,
     height: 32,
-    borderRadius: 12,
-    backgroundColor: '#FEE2E2',
+    borderRadius: Rounded.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
   thumbnailContainer: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: Rounded.sm,
     overflow: 'hidden',
     marginRight: 10,
   },
@@ -577,8 +573,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   submitButton: {
-    borderRadius: 14,
-    height: 52,
+    borderRadius: Rounded.pill,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -589,7 +585,6 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   submitButtonText: {
-    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
   },

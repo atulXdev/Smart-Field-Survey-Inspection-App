@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Switch, Pressable, Alert } from 'react-native';
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts, Rounded, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,7 +12,6 @@ export default function SettingsScreen() {
   
   const [notifications, setNotifications] = useState(true);
   const [locationTracking, setLocationTracking] = useState(true);
-  const [offlineSync, setOfflineSync] = useState(false);
 
   const handleExportData = () => {
     Alert.alert('Export Data', 'Survey database is compiled. Export as JSON/CSV?', [
@@ -38,23 +37,24 @@ export default function SettingsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: activeColors.text }]}>Settings</Text>
-        <Text style={styles.subtitle}>Configure client and system settings.</Text>
+        <Text style={[styles.subtitle, { color: activeColors.muted }]}>Configure client and system settings.</Text>
       </View>
 
       {/* Preferences Section */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: activeColors.text }]}>Preferences</Text>
+        <Text style={[styles.sectionTitle, { color: activeColors.muted }]}>Preferences</Text>
         <View style={[styles.listContainer, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
           
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={18} color={activeColors.icon} style={styles.icon} />
+              <Ionicons name="notifications-outline" size={18} color={activeColors.muted} style={styles.icon} />
               <Text style={[styles.settingText, { color: activeColors.text }]}>Push Notifications</Text>
             </View>
             <Switch 
               value={notifications} 
               onValueChange={setNotifications} 
-              trackColor={{ true: activeColors.tint, false: activeColors.border }} 
+              trackColor={{ true: activeColors.primary, false: activeColors.border }} 
+              thumbColor={notifications ? (theme === 'dark' ? '#000' : '#fff') : undefined}
             />
           </View>
           
@@ -62,13 +62,14 @@ export default function SettingsScreen() {
 
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              <Ionicons name="location-outline" size={18} color={activeColors.icon} style={styles.icon} />
+              <Ionicons name="location-outline" size={18} color={activeColors.muted} style={styles.icon} />
               <Text style={[styles.settingText, { color: activeColors.text }]}>Location Tracking</Text>
             </View>
             <Switch 
               value={locationTracking} 
               onValueChange={setLocationTracking} 
-              trackColor={{ true: activeColors.tint, false: activeColors.border }} 
+              trackColor={{ true: activeColors.primary, false: activeColors.border }} 
+              thumbColor={locationTracking ? (theme === 'dark' ? '#000' : '#fff') : undefined}
             />
           </View>
 
@@ -76,10 +77,10 @@ export default function SettingsScreen() {
 
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              <Ionicons name="color-palette-outline" size={18} color={activeColors.icon} style={styles.icon} />
+              <Ionicons name="color-palette-outline" size={18} color={activeColors.muted} style={styles.icon} />
               <Text style={[styles.settingText, { color: activeColors.text }]}>System Theme</Text>
             </View>
-            <Text style={styles.valueText}>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</Text>
+            <Text style={[styles.valueText, { color: activeColors.muted }]}>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</Text>
           </View>
 
         </View>
@@ -87,31 +88,31 @@ export default function SettingsScreen() {
 
       {/* Data Section */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: activeColors.text }]}>Data</Text>
+        <Text style={[styles.sectionTitle, { color: activeColors.muted }]}>Data</Text>
         <View style={[styles.listContainer, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
           
           <Pressable 
-            style={({ pressed }) => [styles.settingRow, pressed && styles.pressedRow]} 
+            style={({ pressed }) => [styles.settingRow, pressed && { backgroundColor: activeColors.surfaceElevated }]} 
             onPress={handleExportData}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="download-outline" size={18} color={activeColors.icon} style={styles.icon} />
+              <Ionicons name="download-outline" size={18} color={activeColors.muted} style={styles.icon} />
               <Text style={[styles.settingText, { color: activeColors.text }]}>Export Inspection Database</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={activeColors.icon} />
+            <Ionicons name="chevron-forward" size={16} color={activeColors.muted} />
           </Pressable>
 
           <View style={[styles.itemDivider, { backgroundColor: activeColors.border }]} />
 
           <Pressable 
-            style={({ pressed }) => [styles.settingRow, pressed && styles.pressedRow]} 
+            style={({ pressed }) => [styles.settingRow, pressed && { backgroundColor: activeColors.surfaceElevated }]} 
             onPress={handleClearData}
           >
             <View style={styles.settingLeft}>
               <Ionicons name="trash-outline" size={18} color={activeColors.danger} style={styles.icon} />
-              <Text style={[styles.settingText, { color: activeColors.danger, fontWeight: '500' }]}>Clear Survey Data</Text>
+              <Text style={[styles.settingText, { color: activeColors.danger, fontWeight: '600' }]}>Clear Survey Data</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={activeColors.icon} />
+            <Ionicons name="chevron-forward" size={16} color={activeColors.muted} />
           </Pressable>
 
         </View>
@@ -119,8 +120,8 @@ export default function SettingsScreen() {
 
       {/* Version Card */}
       <View style={styles.footer}>
-        <Text style={styles.versionLabel}>Smart Survey & Inspection Utility</Text>
-        <Text style={styles.versionText}>Version 1.0.0 (Production)</Text>
+        <Text style={[styles.versionLabel, { color: activeColors.muted }]}>Smart Survey & Inspection Utility</Text>
+        <Text style={[styles.versionText, { color: activeColors.muted, fontFamily: Fonts.mono }]}>Version 1.0.0 (Production)</Text>
       </View>
 
     </SafeAreaView>
@@ -132,35 +133,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
-    marginBottom: 12,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs,
+    marginBottom: Spacing.xs,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700',
     letterSpacing: -0.5,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
   },
   section: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   listContainer: {
-    borderRadius: 16,
+    borderRadius: Rounded.xl,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -168,18 +167,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 14,
-    height: 48,
-  },
-  pressedRow: {
-    backgroundColor: 'rgba(0,0,0,0.02)',
+    padding: Spacing.md,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   icon: {
-    marginRight: 12,
+    marginRight: Spacing.sm,
   },
   settingText: {
     fontSize: 14,
@@ -187,7 +182,6 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontSize: 13,
-    color: '#64748B',
     fontWeight: '500',
   },
   itemDivider: {
@@ -201,11 +195,9 @@ const styles = StyleSheet.create({
   versionLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#64748B',
   },
   versionText: {
     fontSize: 11,
-    color: '#94A3B8',
     marginTop: 2,
   },
 });

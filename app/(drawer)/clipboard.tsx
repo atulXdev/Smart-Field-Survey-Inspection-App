@@ -3,15 +3,17 @@ import { View, Text, StyleSheet, TextInput, Pressable, Alert, KeyboardAvoidingVi
 import * as Clipboard from 'expo-clipboard';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts, Rounded, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { SurveyContext } from '../context/SurveyContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ClipboardScreen() {
   const [notes, setNotes] = useState('');
   const { surveys } = useContext(SurveyContext);
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? 'dark' : 'light';
+  const activeColors = Colors[theme];
 
   const copySurveyId = async () => {
     const latestSurvey = surveys.length > 0 ? surveys[0].id : 'SRV-12345';
@@ -57,118 +59,123 @@ export default function ClipboardScreen() {
     Alert.alert('Cleared!', 'Clipboard data has been cleared.');
   };
 
-  const ActionCard = ({ title, icon, onPress, bgColor, textColor }: any) => (
+  const ActionCard = ({ title, icon, onPress, isDestructive }: any) => (
     <Pressable 
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: bgColor, opacity: pressed ? 0.8 : 1 }
+        { 
+          backgroundColor: isDestructive ? activeColors.danger + '10' : activeColors.card,
+          borderColor: isDestructive ? activeColors.danger : activeColors.border 
+        },
+        pressed && { backgroundColor: activeColors.surfaceElevated }
       ]}
       onPress={onPress}
     >
-      <Ionicons name={icon} size={24} color={textColor} />
-      <Text style={[styles.cardText, { color: textColor }]}>{title}</Text>
+      <Ionicons name={icon} size={22} color={isDestructive ? activeColors.danger : activeColors.primary} />
+      <Text style={[styles.cardText, { color: isDestructive ? activeColors.danger : activeColors.text }]}>{title}</Text>
     </Pressable>
   );
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: Colors[theme].background }]}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.header, { color: Colors[theme].text }]}>Clipboard Actions</Text>
-        
-        <View style={styles.grid}>
-          <ActionCard 
-            title="Copy Survey ID" 
-            icon="document-text-outline" 
-            onPress={copySurveyId} 
-            bgColor={theme === 'dark' ? '#2c2c2e' : '#f0f0f0'}
-            textColor={Colors[theme].text}
-          />
-          <ActionCard 
-            title="Copy Contact" 
-            icon="call-outline" 
-            onPress={copyContactNumber} 
-            bgColor={theme === 'dark' ? '#2c2c2e' : '#f0f0f0'}
-            textColor={Colors[theme].text}
-          />
-          <ActionCard 
-            title="Copy Location" 
-            icon="location-outline" 
-            onPress={copyLocation} 
-            bgColor={theme === 'dark' ? '#2c2c2e' : '#f0f0f0'}
-            textColor={Colors[theme].text}
-          />
-          <ActionCard 
-            title="Clear Clipboard" 
-            icon="trash-outline" 
-            onPress={clearClipboard} 
-            bgColor={theme === 'dark' ? '#3a1c1c' : '#ffebeb'}
-            textColor="#ff4444"
-          />
-        </View>
-
-        <View style={[styles.notesSection, { backgroundColor: theme === 'dark' ? '#1c1c1e' : '#fff' }]}>
-          <View style={styles.notesHeader}>
-            <Text style={[styles.notesTitle, { color: Colors[theme].text }]}>Inspection Notes</Text>
-            <Pressable onPress={pasteNotes} style={styles.pasteButton}>
-              <Ionicons name="clipboard-outline" size={18} color={Colors[theme].tint} />
-              <Text style={[styles.pasteText, { color: Colors[theme].tint }]}>Paste</Text>
-            </Pressable>
-          </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: activeColors.background }]} edges={['top']}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <Text style={[styles.header, { color: activeColors.text }]}>Clipboard Actions</Text>
           
-          <TextInput
-            style={[styles.textInput, { 
-              color: Colors[theme].text, 
-              backgroundColor: theme === 'dark' ? '#2c2c2e' : '#f9f9f9',
-              borderColor: theme === 'dark' ? '#333' : '#e0e0e0'
-            }]}
-            multiline
-            placeholder="Type or paste notes here..."
-            placeholderTextColor="#888"
-            value={notes}
-            onChangeText={setNotes}
-            textAlignVertical="top"
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={styles.grid}>
+            <ActionCard 
+              title="Copy Survey ID" 
+              icon="document-text-outline" 
+              onPress={copySurveyId} 
+            />
+            <ActionCard 
+              title="Copy Contact" 
+              icon="call-outline" 
+              onPress={copyContactNumber} 
+            />
+            <ActionCard 
+              title="Copy Location" 
+              icon="location-outline" 
+              onPress={copyLocation} 
+            />
+            <ActionCard 
+              title="Clear Clipboard" 
+              icon="trash-outline" 
+              onPress={clearClipboard} 
+              isDestructive
+            />
+          </View>
+
+          <View style={[styles.notesSection, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
+            <View style={styles.notesHeader}>
+              <Text style={[styles.notesTitle, { color: activeColors.text }]}>Inspection Notes</Text>
+              <Pressable 
+                onPress={pasteNotes} 
+                style={({ pressed }) => [
+                  styles.pasteButton, 
+                  { backgroundColor: activeColors.surfaceElevated },
+                  pressed && { opacity: 0.8 }
+                ]}
+              >
+                <Ionicons name="clipboard-outline" size={16} color={activeColors.primary} />
+                <Text style={[styles.pasteText, { color: activeColors.text }]}>Paste</Text>
+              </Pressable>
+            </View>
+            
+            <TextInput
+              style={[styles.textInput, { 
+                color: activeColors.text, 
+                backgroundColor: activeColors.background,
+                borderColor: activeColors.border
+              }]}
+              multiline
+              placeholder="Type or paste notes here..."
+              placeholderTextColor={activeColors.muted}
+              value={notes}
+              onChangeText={setNotes}
+              textAlignVertical="top"
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingTop: 40,
-    paddingBottom: 60,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
   header: {
-    fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 24,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: Spacing.md,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 32,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   card: {
-    width: '47%',
-    padding: 20,
-    borderRadius: 16,
+    width: '47.5%',
+    padding: Spacing.md,
+    borderRadius: Rounded.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    gap: 12,
+    borderWidth: 1,
+    gap: 10,
   },
   cardText: {
     fontSize: 14,
@@ -176,22 +183,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   notesSection: {
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    borderRadius: Rounded.xl,
+    padding: Spacing.md,
+    borderWidth: 1,
   },
   notesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   notesTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
   },
   pasteButton: {
@@ -200,19 +203,18 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(10, 126, 164, 0.1)',
+    borderRadius: Rounded.pill,
   },
   pasteText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   textInput: {
     height: 150,
-    borderRadius: 12,
+    borderRadius: Rounded.md,
     borderWidth: 1,
-    padding: 16,
-    fontSize: 16,
-    lineHeight: 24,
+    padding: 12,
+    fontSize: 15,
+    lineHeight: 22,
   },
 });

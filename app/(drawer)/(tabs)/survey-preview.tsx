@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { SurveyContext } from '../../context/SurveyContext';
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts, Rounded, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function SurveyPreviewScreen() {
@@ -42,15 +42,24 @@ export default function SurveyPreviewScreen() {
     Alert.alert('Copied!', 'Survey summary has been copied to your clipboard.');
   };
 
-  const DetailItem = ({ icon, label, value }: { icon: any, label: string, value: string | undefined }) => (
-    <View style={styles.detailItem}>
-      <View style={styles.detailLeft}>
-        <Ionicons name={icon} size={18} color={activeColors.icon} style={styles.detailIcon} />
-        <Text style={styles.detailLabel}>{label}</Text>
+  const DetailItem = ({ icon, label, value }: { icon: any, label: string, value: string | undefined }) => {
+    const isNumericValue = label === 'Date' || label === 'Coordinates' || label === 'Contact';
+    return (
+      <View style={styles.detailItem}>
+        <View style={styles.detailLeft}>
+          <Ionicons name={icon} size={18} color={activeColors.muted} style={styles.detailIcon} />
+          <Text style={[styles.detailLabel, { color: activeColors.muted }]}>{label}</Text>
+        </View>
+        <Text style={[
+          styles.detailValue, 
+          { color: activeColors.text },
+          isNumericValue && { fontFamily: Fonts.mono }
+        ]}>
+          {value || '—'}
+        </Text>
       </View>
-      <Text style={[styles.detailValue, { color: activeColors.text }]}>{value || '—'}</Text>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: activeColors.background }]} edges={['top']}>
@@ -95,7 +104,7 @@ export default function SurveyPreviewScreen() {
         <View style={[styles.card, { backgroundColor: activeColors.card, borderColor: activeColors.border }]}>
           <Text style={[styles.cardTitle, { color: activeColors.text }]}>Inspection Notes</Text>
           <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
-          <Text style={[styles.notesText, { color: params.description ? activeColors.text : '#64748B' }]}>
+          <Text style={[styles.notesText, { color: params.description ? activeColors.text : activeColors.muted }]}>
             {params.description || 'No additional notes provided.'}
           </Text>
         </View>
@@ -105,7 +114,7 @@ export default function SurveyPreviewScreen() {
           style={({ pressed }) => [
             styles.copyBtn, 
             { borderColor: activeColors.border, backgroundColor: activeColors.card },
-            pressed && styles.pressedState
+            pressed && { backgroundColor: activeColors.surfaceElevated }
           ]} 
           onPress={handleCopySummary}
         >
@@ -119,7 +128,7 @@ export default function SurveyPreviewScreen() {
             style={({ pressed }) => [
               styles.editBtn, 
               { borderColor: activeColors.border, backgroundColor: activeColors.card },
-              pressed && styles.pressedState
+              pressed && { backgroundColor: activeColors.surfaceElevated }
             ]} 
             onPress={() => router.back()}
           >
@@ -129,12 +138,12 @@ export default function SurveyPreviewScreen() {
           <Pressable 
             style={({ pressed }) => [
               styles.submitBtn, 
-              { backgroundColor: activeColors.tint },
+              { backgroundColor: activeColors.primary },
               pressed && styles.pressedState
             ]} 
             onPress={handleSubmit}
           >
-            <Text style={styles.submitBtnText}>Submit Report</Text>
+            <Text style={[styles.submitBtnText, { color: activeColors.onPrimary }]}>Submit Report</Text>
           </Pressable>
         </View>
 
@@ -151,7 +160,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 14,
   },
   backButton: {
@@ -162,14 +171,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.xl,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: Rounded.xl,
     borderWidth: 1,
-    padding: 16,
-    marginBottom: 16,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
   },
   cardTitle: {
     fontSize: 15,
@@ -195,7 +204,6 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 13,
-    color: '#64748B',
     fontWeight: '500',
   },
   detailValue: {
@@ -211,9 +219,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 48,
-    borderRadius: 12,
+    borderRadius: Rounded.pill,
     borderWidth: 1,
-    marginBottom: 20,
+    marginBottom: Spacing.md,
   },
   copyBtnText: {
     fontSize: 14,
@@ -221,12 +229,12 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: Spacing.sm,
   },
   editBtn: {
     flex: 1,
-    height: 52,
-    borderRadius: 14,
+    height: 48,
+    borderRadius: Rounded.pill,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -237,13 +245,12 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     flex: 2,
-    height: 52,
-    borderRadius: 14,
+    height: 48,
+    borderRadius: Rounded.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   submitBtnText: {
-    color: '#FFF',
     fontSize: 15,
     fontWeight: '600',
   },
